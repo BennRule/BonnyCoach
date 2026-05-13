@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bonnycoach-v5';
+const CACHE_NAME = 'bonnycoach-v6';
 
 // Force activate when told to skip waiting
 self.addEventListener('message', e => {
