@@ -1624,6 +1624,21 @@ App.today.startGlobalRest = function(ei) {
   document.addEventListener('visibilitychange', onVisibility);
   const completionTimeout = setTimeout(() => { if (!completed) complete(); }, total * 1000 + 100);
 
+  // Wake Lock — keep the screen on during the rest timer so the tab doesn't get backgrounded
+  let wakeLock = null;
+  if ('wakeLock' in navigator) {
+    navigator.wakeLock.request('screen').then(lock => {
+      wakeLock = lock;
+      lock.addEventListener('release', () => { wakeLock = null; });
+    }).catch(() => {});
+    function onVisChange() {
+      if (document.visibilityState === 'visible' && !wakeLock && !completed) {
+        navigator.wakeLock.request('screen').then(l => { wakeLock = l; }).catch(() => {});
+      }
+    }
+    document.addEventListener('visibilitychange', onVisChange);
+  }
+
   App.restTimer = {
     interval,
     completionTimeout,
@@ -1633,6 +1648,7 @@ App.today.startGlobalRest = function(ei) {
       clearInterval(interval);
       clearTimeout(completionTimeout);
       document.removeEventListener('visibilitychange', onVisibility);
+      if (wakeLock) { try { wakeLock.release(); } catch(_) {} wakeLock = null; }
     }
   };
 };
